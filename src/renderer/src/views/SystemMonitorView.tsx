@@ -46,22 +46,6 @@ export default function SystemMonitorView(): React.JSX.Element {
           color="#c89b3c"
         />
       </div>
-
-      <div style={styles.infoBox}>
-        <h3 style={styles.infoTitle}>What is a Native Addon?</h3>
-        <p style={styles.infoText}>
-          A C++ native addon is a <code>.node</code> file that Node.js (and Electron) can{' '}
-          <code>require()</code> like any JS module. You write C++ using the{' '}
-          <strong>node-addon-api</strong> library, compile it with <code>node-gyp</code>,
-          and it runs at native speed — perfect for system calls, CPU-intensive work,
-          or wrapping existing C++ libraries.
-        </p>
-        <p style={styles.infoText}>
-          <strong>Analogy:</strong> Think of it like exposing a Slate/UMG native widget
-          function to Blueprint — you write the low-level C++ and expose a clean interface
-          that the higher-level system (JavaScript/Blueprint) can call without knowing the details.
-        </p>
-      </div>
     </div>
   )
 }
