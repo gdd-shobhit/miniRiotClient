@@ -16,7 +16,7 @@
  */
 
 import Store from 'electron-store'
-import type { Settings } from '../shared/types'
+import type { Settings } from '../shared/index'
 
 export const settingsStore = new Store<Settings>({
   name: 'config',

@@ -37,6 +37,8 @@ export default function LibraryView(): React.JSX.Element {
   if (!selectedGame) return <div style={{ flex: 1 }} />
 
   const isThisGameLaunching = isLaunching && activeGameId === selectedGame.id
+  const isThisGameRunning = !isLaunching && activeGameId === selectedGame.id && launchStatus?.stage === 'running'
+  const isButtonDisabled = isThisGameLaunching || isThisGameRunning
 
   return (
     <div style={styles.container}>
@@ -91,11 +93,11 @@ export default function LibraryView(): React.JSX.Element {
           <div style={styles.actions}>
             {selectedGame.status === 'installed' && (
               <button
-                style={{ ...styles.btnPrimary, ...(isThisGameLaunching ? styles.btnDisabled : {}) }}
-                onClick={() => !isThisGameLaunching && launchGame(selectedGame.id)}
-                disabled={isThisGameLaunching}
+                style={{ ...styles.btnPrimary, ...(isButtonDisabled ? styles.btnDisabled : {}) }}
+                onClick={() => !isButtonDisabled && launchGame(selectedGame.id)}
+                disabled={isButtonDisabled}
               >
-                {isThisGameLaunching ? 'Launching…' : 'Play'}
+                {isThisGameLaunching ? 'Launching…' : isThisGameRunning ? 'Running' : 'Play'}
               </button>
             )}
             {selectedGame.status === 'update-available' && (

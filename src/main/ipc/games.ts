@@ -17,7 +17,7 @@
  */
 
 import { ipcMain } from 'electron'
-import type { Game } from '../../shared/types'
+import type { Game } from '../../shared/index'
 
 // Vite bundles JSON imports at build time — no runtime file path needed.
 // In a real launcher, this would come from a network manifest or a local DB.
