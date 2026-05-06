@@ -1,0 +1,34 @@
+{
+  "name": "rift-launcher",
+  "version": "1.0.0",
+  "description": "A Riot-inspired game launcher desktop app — learning project for Electron + C++ native addons",
+  "main": "out/main/index.mjs",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "start": "electron-vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gdd-shobhit/MyElectronApp.git"
+  },
+  "author": "Shobhit Dhamania",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "electron": "^42.0.0",
+    "electron-vite": "^5.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10"
+  },
+  "dependencies": {
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-router-dom": "^7.15.0",
+    "zustand": "^5.0.13"
+  }
+}
