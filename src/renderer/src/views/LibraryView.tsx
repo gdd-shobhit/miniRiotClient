@@ -1,22 +1,42 @@
 /**
- * LIBRARY VIEW — Phase 1 main screen
+ * LIBRARY VIEW — Phase 2
  *
- * Split into two panels:
- *   Left:  scrollable game list (GameCard components)
- *   Right: detail panel for the selected game
+ * Changes from Phase 1:
+ *   - Games come from useGameStore (loaded via IPC on app mount)
+ *   - Launch button triggers useLaunchStore.launchGame()
+ *   - LaunchStatusBar shows real-time push events from main process
  *
- * State is read from Zustand (useGameStore). This is purely presentational
- * in Phase 1 — all data is hardcoded mock data from the store.
+ * The full IPC round-trip on Play click:
+ *   1. User clicks Play
+ *   2. launchGame(gameId) → invoke('game:launch', gameId)
+ *   3. Main process: simulateLaunch() starts, sends 'game:status' events
+ *   4. preload: onGameStatus listener receives events, calls our callback
+ *   5. launchStore updates `status` state
+ *   6. LaunchStatusBar re-renders with each new stage
  */
 
 import React from 'react'
 import { useGameStore } from '../store/gameStore'
+import { useLaunchStore } from '../store/launchStore'
 import GameCard from '../components/GameCard'
 import StatusBadge from '../components/StatusBadge'
 
 export default function LibraryView(): React.JSX.Element {
-  const { games, selectedGameId, selectGame } = useGameStore()
+  const { games, selectedGameId, status: loadStatus, selectGame } = useGameStore()
+  const { launchGame, isLaunching, activeGameId, status: launchStatus } = useLaunchStore()
   const selectedGame = games.find((g) => g.id === selectedGameId) ?? games[0]
+
+  if (loadStatus === 'idle' || loadStatus === 'loading') {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ color: '#5a6d7e', fontSize: 13 }}>Loading library…</span>
+      </div>
+    )
+  }
+
+  if (!selectedGame) return <div style={{ flex: 1 }} />
+
+  const isThisGameLaunching = isLaunching && activeGameId === selectedGame.id
 
   return (
     <div style={styles.container}>
@@ -40,7 +60,6 @@ export default function LibraryView(): React.JSX.Element {
 
       {/* ── Right: Game Detail ──────────────────────── */}
       <main style={styles.detail}>
-        {/* Hero banner */}
         <div style={{ ...styles.hero, background: selectedGame.coverColor }}>
           <div style={styles.heroOverlay}>
             <h1 style={styles.heroTitle}>{selectedGame.title}</h1>
@@ -48,7 +67,6 @@ export default function LibraryView(): React.JSX.Element {
           </div>
         </div>
 
-        {/* Detail content */}
         <div style={styles.content}>
           <div style={styles.row}>
             <StatusBadge status={selectedGame.status} />
@@ -62,15 +80,27 @@ export default function LibraryView(): React.JSX.Element {
             <Stat label="Last Played" value={selectedGame.lastPlayed ?? 'Never'} />
           </div>
 
+          {/* Launch status bar — visible during and after launch */}
+          {isThisGameLaunching || (launchStatus && activeGameId === selectedGame.id) ? (
+            <LaunchStatusBar
+              stage={launchStatus?.stage ?? 'checking'}
+              message={launchStatus?.message ?? 'Preparing…'}
+            />
+          ) : null}
+
           <div style={styles.actions}>
             {selectedGame.status === 'installed' && (
-              <button style={styles.btnPrimary}>
-                Play
+              <button
+                style={{ ...styles.btnPrimary, ...(isThisGameLaunching ? styles.btnDisabled : {}) }}
+                onClick={() => !isThisGameLaunching && launchGame(selectedGame.id)}
+                disabled={isThisGameLaunching}
+              >
+                {isThisGameLaunching ? 'Launching…' : 'Play'}
               </button>
             )}
             {selectedGame.status === 'update-available' && (
               <>
-                <button style={styles.btnPrimary}>Play</button>
+                <button style={styles.btnPrimary} onClick={() => launchGame(selectedGame.id)}>Play</button>
                 <button style={styles.btnSecondary}>Update</button>
               </>
             )}
@@ -84,6 +114,8 @@ export default function LibraryView(): React.JSX.Element {
   )
 }
 
+// ── Sub-components ──────────────────────────────────────
+
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div style={statStyles.container}>
@@ -93,6 +125,36 @@ function Stat({ label, value }: { label: string; value: string }) {
   )
 }
 
+const STAGE_COLORS: Record<string, string> = {
+  checking:  '#c89b3c',
+  patching:  '#00b4d8',
+  launching: '#ff4655',
+  running:   '#4ade80',
+  error:     '#ef4444'
+}
+
+function LaunchStatusBar({ stage, message }: { stage: string; message: string }) {
+  const color = STAGE_COLORS[stage] ?? '#9aabbd'
+  return (
+    <div style={launchStyles.bar}>
+      <span style={{ ...launchStyles.dot, background: color }} />
+      <span style={{ ...launchStyles.stage, color }}>{stage.toUpperCase()}</span>
+      <span style={launchStyles.message}>{message}</span>
+    </div>
+  )
+}
+
+const launchStyles: Record<string, React.CSSProperties> = {
+  bar: {
+    display: 'flex', alignItems: 'center', gap: 10,
+    padding: '10px 16px', background: 'rgba(0,0,0,0.3)',
+    borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)'
+  },
+  dot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
+  stage: { fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', flexShrink: 0 },
+  message: { fontSize: 13, color: '#9aabbd' }
+}
+
 const statStyles: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: 2 },
   label: { fontSize: 11, color: '#5a6d7e', textTransform: 'uppercase', letterSpacing: '0.06em' },
@@ -100,134 +162,52 @@ const statStyles: Record<string, React.CSSProperties> = {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flex: 1,
-    overflow: 'hidden'
-  },
-  // Game list panel
+  container: { display: 'flex', flex: 1, overflow: 'hidden' },
   gameList: {
-    width: 280,
-    borderRight: '1px solid rgba(255,255,255,0.06)',
-    display: 'flex',
-    flexDirection: 'column',
-    flexShrink: 0,
-    overflow: 'hidden'
+    width: 280, borderRight: '1px solid rgba(255,255,255,0.06)',
+    display: 'flex', flexDirection: 'column', flexShrink: 0, overflow: 'hidden'
   },
   listHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '16px 16px 8px'
   },
   listTitle: {
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase',
-    color: '#5a6d7e'
+    fontSize: 11, fontWeight: 700, letterSpacing: '0.1em',
+    textTransform: 'uppercase', color: '#5a6d7e'
   },
   count: {
-    fontSize: 11,
-    color: '#2d3f50',
-    background: 'rgba(255,255,255,0.05)',
-    padding: '2px 7px',
-    borderRadius: 10
+    fontSize: 11, color: '#2d3f50', background: 'rgba(255,255,255,0.05)',
+    padding: '2px 7px', borderRadius: 10
   },
-  list: {
-    listStyle: 'none',
-    overflowY: 'auto',
-    flex: 1,
-    padding: '4px 8px'
-  },
-  // Detail panel
-  detail: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden'
-  },
-  hero: {
-    height: 220,
-    position: 'relative',
-    flexShrink: 0
-  },
+  list: { listStyle: 'none', overflowY: 'auto', flex: 1, padding: '4px 8px' },
+  detail: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  hero: { height: 220, position: 'relative', flexShrink: 0 },
   heroOverlay: {
-    position: 'absolute',
-    inset: 0,
+    position: 'absolute', inset: 0,
     background: 'linear-gradient(to top, rgba(15,25,35,0.95) 0%, rgba(15,25,35,0.2) 100%)',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-end',
-    padding: '24px 32px'
+    display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '24px 32px'
   },
-  heroTitle: {
-    fontSize: 32,
-    fontWeight: 800,
-    letterSpacing: '-0.02em',
-    color: '#ece8e1'
-  },
-  heroGenre: {
-    fontSize: 13,
-    color: '#9aabbd',
-    marginTop: 4
-  },
+  heroTitle: { fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em', color: '#ece8e1' },
+  heroGenre: { fontSize: 13, color: '#9aabbd', marginTop: 4 },
   content: {
-    padding: '24px 32px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 20,
-    overflowY: 'auto',
-    flex: 1
+    padding: '24px 32px', display: 'flex', flexDirection: 'column',
+    gap: 20, overflowY: 'auto', flex: 1
   },
-  row: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 16
-  },
-  version: {
-    fontSize: 11,
-    color: '#2d3f50',
-    letterSpacing: '0.04em'
-  },
-  description: {
-    fontSize: 14,
-    color: '#9aabbd',
-    lineHeight: 1.7,
-    maxWidth: 560
-  },
-  statsRow: {
-    display: 'flex',
-    gap: 40
-  },
-  actions: {
-    display: 'flex',
-    gap: 12
-  },
+  row: { display: 'flex', alignItems: 'center', gap: 16 },
+  version: { fontSize: 11, color: '#2d3f50', letterSpacing: '0.04em' },
+  description: { fontSize: 14, color: '#9aabbd', lineHeight: 1.7, maxWidth: 560 },
+  statsRow: { display: 'flex', gap: 40 },
+  actions: { display: 'flex', gap: 12 },
   btnPrimary: {
-    padding: '10px 32px',
-    background: '#ff4655',
-    color: '#ece8e1',
-    fontWeight: 700,
-    fontSize: 13,
-    letterSpacing: '0.06em',
-    textTransform: 'uppercase',
-    borderRadius: 2,
-    cursor: 'pointer',
-    border: 'none',
-    transition: 'background 0.15s'
+    padding: '10px 32px', background: '#ff4655', color: '#ece8e1',
+    fontWeight: 700, fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase',
+    borderRadius: 2, cursor: 'pointer', border: 'none', transition: 'background 0.15s'
   },
+  btnDisabled: { background: '#5a2d34', cursor: 'not-allowed' },
   btnSecondary: {
-    padding: '10px 32px',
-    background: 'transparent',
-    color: '#9aabbd',
-    fontWeight: 700,
-    fontSize: 13,
-    letterSpacing: '0.06em',
-    textTransform: 'uppercase',
-    borderRadius: 2,
-    cursor: 'pointer',
-    border: '1px solid rgba(255,255,255,0.15)',
+    padding: '10px 32px', background: 'transparent', color: '#9aabbd',
+    fontWeight: 700, fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase',
+    borderRadius: 2, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.15)',
     transition: 'border-color 0.15s'
   }
 }

@@ -3,7 +3,7 @@
  *
  * A selectable card in the library sidebar. Clicking it updates the Zustand
  * store (selectedGameId), which the GameDetail panel reads reactively.
- * This is the React equivalent of your MVVM selection binding.
+ * This is the React equivalent of my MVVM selection binding.
  */
 
 import React from 'react'

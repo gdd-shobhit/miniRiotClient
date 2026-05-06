@@ -26,6 +26,7 @@
     "vite": "^8.0.10"
   },
   "dependencies": {
+    "electron-store": "^11.0.2",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.15.0",

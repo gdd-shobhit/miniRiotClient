@@ -1,6 +1,6 @@
 /**
  * Renderer entry point — React mounts here.
- * This is equivalent to your UMG widget tree root or Slate application entry.
+ * This is equivalent to my UMG widget tree root or Slate application entry.
  */
 
 import React from 'react'

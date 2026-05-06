@@ -1,17 +1,13 @@
-export interface Game {
-  id: string
-  title: string
-  genre: string
-  description: string
-  status: 'installed' | 'not-installed' | 'update-available'
-  lastPlayed: string | null
-  playtimeHours: number
-  coverColor: string   // gradient fallback while we have no real cover art
-  version: string
-}
+/**
+ * Renderer types — re-export from shared source of truth.
+ * No type is defined here; everything lives in src/shared/types.ts.
+ */
+import type { Settings, Game, LaunchStatus } from '../../../shared/types'
 
-// Augment the global Window interface so TypeScript knows about our
-// contextBridge-exposed API (defined in preload/index.ts)
+export type { Settings, Game, LaunchStatus }
+
+// Augment the global Window so every component gets full type-safety
+// on window.electronAPI without extra imports.
 declare global {
   interface Window {
     electronAPI: {
@@ -19,6 +15,14 @@ declare global {
       maximizeWindow: () => void
       closeWindow: () => void
       platform: string
+
+      getGames: () => Promise<Game[]>
+
+      getSettings: () => Promise<Settings>
+      setSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => Promise<void>
+
+      launchGame: (gameId: string) => Promise<void>
+      onGameStatus: (callback: (status: LaunchStatus) => void) => () => void
     }
   }
 }
