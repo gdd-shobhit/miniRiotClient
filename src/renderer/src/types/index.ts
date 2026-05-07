@@ -2,9 +2,9 @@
  * Renderer types — re-export from shared source of truth.
  * No type is defined here; everything lives in src/shared/types.ts.
  */
-import type { Settings, Game, LaunchStatus } from '../../../shared/types'
+import type { Settings, Game, LaunchStatus, SystemInfo } from '../../../shared/types'
 
-export type { Settings, Game, LaunchStatus }
+export type { Settings, Game, LaunchStatus, SystemInfo }
 
 // Augment the global Window so every component gets full type-safety
 // on window.electronAPI without extra imports.
@@ -23,6 +23,10 @@ declare global {
 
       launchGame: (gameId: string) => Promise<void>
       onGameStatus: (callback: (status: LaunchStatus) => void) => () => void
+
+      // System Info from C++ native addon
+      getSystemInfo: () => Promise<SystemInfo>
+      onSystemInfo: (callback: (info: SystemInfo) => void) => () => void
     }
   }
 }

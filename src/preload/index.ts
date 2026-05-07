@@ -19,7 +19,7 @@
  */
 
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Game, Settings, LaunchStatus } from '../shared/types'
+import type { Game, Settings, LaunchStatus, SystemInfo } from '../shared/types'
 
 const electronAPI = {
   // ── Window controls ───────────────────────────────────
@@ -51,6 +51,19 @@ const electronAPI = {
       callback(status)
     ipcRenderer.on('game:status', handler)
     return () => ipcRenderer.off('game:status', handler)
+  },
+
+  // System Info
+  getSystemInfo: (): Promise<SystemInfo> =>
+    ipcRenderer.invoke('system:getInfo'),
+
+  // Subscribe to the 2-second push loop from main.
+  // Call the cleanup fn in useEffect's return to avoid memory leaks.
+  onSystemInfo: (callback: (info: SystemInfo) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, info: SystemInfo) =>
+      callback(info)
+    ipcRenderer.on('system:info', handler)
+    return () => ipcRenderer.off('system:info', handler)
   }
 }
 

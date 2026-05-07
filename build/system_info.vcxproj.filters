@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="..">
+      <UniqueIdentifier>{13ED4249-1F9C-5F0F-2651-29A73F3A7059}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\native">
+      <UniqueIdentifier>{751DE1B9-2CA6-B33D-2A40-92CBD5B002F3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="E:">
+      <UniqueIdentifier>{97E1A3A8-7FAC-1DB5-E5B7-486D2EFD27A1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="E:\DesktopAppExamples">
+      <UniqueIdentifier>{708C8730-06D9-2B90-ECB3-B4317CC94908}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="E:\DesktopAppExamples\MyElectronApp">
+      <UniqueIdentifier>{E0D4BCA1-CACB-877C-EA78-80FD9CB06F53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="E:\DesktopAppExamples\MyElectronApp\node_modules">
+      <UniqueIdentifier>{126A39EA-1D28-5689-C126-0DA0AB5837A0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="E:\DesktopAppExamples\MyElectronApp\node_modules\node-gyp">
+      <UniqueIdentifier>{49558BB4-6D34-CA91-A65D-85A65792DC11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="E:\DesktopAppExamples\MyElectronApp\node_modules\node-gyp\src">
+      <UniqueIdentifier>{F1003AD6-4B6D-45DF-3F56-5CAC869BF55E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..">
+      <UniqueIdentifier>{13ED4249-1F9C-5F0F-2651-29A73F3A7059}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\native\system_info.cpp">
+      <Filter>..\native</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\DesktopAppExamples\MyElectronApp\node_modules\node-gyp\src\win_delay_load_hook.cc">
+      <Filter>E:\DesktopAppExamples\MyElectronApp\node_modules\node-gyp\src</Filter>
+    </ClCompile>
+    <None Include="..\binding.gyp">
+      <Filter>..</Filter>
+    </None>
+  </ItemGroup>
+</Project>

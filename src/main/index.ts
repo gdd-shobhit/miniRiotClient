@@ -15,6 +15,7 @@ import { join } from 'path'
 import { registerGamesHandlers } from './ipc/games'
 import { registerSettingsHandlers } from './ipc/settings'
 import { registerLaunchHandlers } from './ipc/launch'
+import { registerSystemInfoHandlers, startSystemInfoPolling } from './ipc/systemInfo'
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
@@ -37,6 +38,14 @@ function createWindow(): void {
   // Show window only once the renderer is fully painted (no white flash)
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
+  })
+
+  // Start pushing system info once the renderer HTML + JS is fully loaded.
+  // did-finish-load fires after the page (and its scripts) have loaded, which
+  // ensures the ipcRenderer listeners in the renderer are registered before
+  // the first system:info push arrives.
+  mainWindow.webContents.once('did-finish-load', () => {
+    startSystemInfoPolling(mainWindow)
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -68,6 +77,7 @@ ipcMain.on('window:close', () => BrowserWindow.getFocusedWindow()?.close())
 registerGamesHandlers()
 registerSettingsHandlers()
 registerLaunchHandlers()
+registerSystemInfoHandlers()
 
 // ── App lifecycle ───────────────────────────────────────
 app.whenReady().then(() => {
