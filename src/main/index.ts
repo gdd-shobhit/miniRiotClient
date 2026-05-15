@@ -17,7 +17,12 @@ import { registerSettingsHandlers } from './ipc/settings'
 import { registerLaunchHandlers } from './ipc/launch'
 import { registerSystemInfoHandlers, startSystemInfoPolling } from './ipc/systemInfo'
 
-const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
+// Use ELECTRON_RENDERER_URL as the canonical "are we in dev mode" signal.
+// electron-vite sets this variable only when running `electron-vite dev`.
+// Relying on !app.isPackaged would also be true when running E2E tests from
+// the source tree, causing the main window to try loading localhost:5173
+// (the dev server) and opening DevTools — neither of which exist in tests.
+const isDev = !!process.env['ELECTRON_RENDERER_URL']
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -41,9 +46,6 @@ function createWindow(): void {
   })
 
   // Start pushing system info once the renderer HTML + JS is fully loaded.
-  // did-finish-load fires after the page (and its scripts) have loaded, which
-  // ensures the ipcRenderer listeners in the renderer are registered before
-  // the first system:info push arrives.
   mainWindow.webContents.once('did-finish-load', () => {
     startSystemInfoPolling(mainWindow)
   })

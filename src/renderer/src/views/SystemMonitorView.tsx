@@ -15,6 +15,7 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 import type { SystemInfo } from '../../../shared/types'
+import { formatUptime } from '../utils/formatUptime'
 
 // Default state while first data hasn't arrived
 
@@ -161,17 +162,6 @@ function MetricCard({
       </div>
     </div>
   )
-}
-
-// Helpers 
-
-function formatUptime(hours: number): string {
-  const d = Math.floor(hours / 24)
-  const h = Math.floor(hours % 24)
-  const m = Math.floor((hours * 60) % 60)
-  if (d > 0) return `${d}d ${h}h ${m}m`
-  if (h > 0) return `${h}h ${m}m`
-  return `${m}m`
 }
 
 // Styles 

@@ -18,11 +18,33 @@ import type { SystemInfo } from '../../shared/types'
 const _require = createRequire(import.meta.url)
 
 // Raw shape returned by the C++ addon (matches what system_info.cpp sets on the result object)
-interface NativeAddonResult {
+export interface NativeAddonResult {
   cpu: number
   memoryUsed: number
   memoryTotal: number
   uptime: number
+}
+
+/**
+ * transformAddonResult — pure function, exported for unit testing.
+ *
+ * Converts raw C++ addon output into the typed SystemInfo the renderer expects:
+ *   - Rounds cpu to 1 decimal place (cosmetic — no need for 4 sig figs)
+ *   - Rounds memory to 2 decimal places (GB, so 2dp ≈ 10 MB precision)
+ *   - Rounds uptime to 1 decimal place
+ *   - Tags the result as 'native' source
+ *
+ * Extracting this as a pure function means we can unit test the rounding and
+ * transformation logic without needing to mock Electron or the compiled addon.
+ */
+export function transformAddonResult(raw: NativeAddonResult): SystemInfo {
+  return {
+    cpu:         Math.round(raw.cpu         * 10)  / 10,
+    memoryUsed:  Math.round(raw.memoryUsed  * 100) / 100,
+    memoryTotal: Math.round(raw.memoryTotal * 100) / 100,
+    uptime:      Math.round(raw.uptime      * 10)  / 10,
+    source: 'native'
+  }
 }
 
 interface NativeAddon {
@@ -71,14 +93,7 @@ export function getSystemInfo(): SystemInfo {
 
   // try and catch might be too much but could be useful for debugging and catching errors
   try {
-    const raw = native.getSystemInfo()
-    return {
-      cpu:         Math.round(raw.cpu * 10) / 10,
-      memoryUsed:  Math.round(raw.memoryUsed  * 100) / 100,
-      memoryTotal: Math.round(raw.memoryTotal * 100) / 100,
-      uptime:      Math.round(raw.uptime      * 10)  / 10,
-      source: 'native'
-    }
+    return transformAddonResult(native.getSystemInfo())
   } catch (err) {
     console.error('[system-info] getSystemInfo() threw:', err)
     return { cpu: 0, memoryUsed: 0, memoryTotal: 0, uptime: 0, source: 'mock' }
